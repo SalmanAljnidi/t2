@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>من سيربح المليون - جدول الضرب</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+</head>
+<body>
+
+    <div class="main-studio">
+        
+        <div class="lifelines-container">
+            <button class="lifeline-btn" id="btn-50" onclick="use5050()">
+                <i class="fas fa-balance-scale"></i> حذف إجابتين
+            </button>
+            <button class="lifeline-btn" id="btn-friend" onclick="useCallFriend()">
+                <i class="fas fa-phone"></i> اتصال بصديق
+            </button>
+            <button class="lifeline-btn" id="btn-audience" onclick="useAudience()">
+                <i class="fas fa-users"></i> رأي الجمهور
+            </button>
+        </div>
+
+        <div class="game-area">
+            <div class="logo-container">
+                <div class="logo-ring">
+                    <h1>؟</h1>
+                </div>
+            </div>
+
+            <div class="question-container">
+                <div class="question-hex">
+                    <span id="question-text">جاري التحميل...</span>
+                </div>
+            </div>
+
+            <div class="answers-container">
+                <div class="answer-row">
+                    <div class="hex-btn" id="btn0" onclick="selectAnswer(0)">
+                        <span class="prefix">أ:</span> <span id="ans0" class="ans-text"></span>
+                    </div>
+                    <div class="hex-btn" id="btn1" onclick="selectAnswer(1)">
+                        <span class="prefix">ب:</span> <span id="ans1" class="ans-text"></span>
+                    </div>
+                </div>
+                <div class="answer-row">
+                    <div class="hex-btn" id="btn2" onclick="selectAnswer(2)">
+                        <span class="prefix">ج:</span> <span id="ans2" class="ans-text"></span>
+                    </div>
+                    <div class="hex-btn" id="btn3" onclick="selectAnswer(3)">
+                        <span class="prefix">د:</span> <span id="ans3" class="ans-text"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="install-btn" class="install-hidden"><i class="fas fa-download"></i> تثبيت التطبيق</button>
+        </div>
+    </div>
+
+    <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+        <div class="modal-content">
+            <h3 id="modal-title"></h3>
+            <p id="modal-body"></p>
+            <button onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="copyright">جميع الحقوق محفوظة لـ سلمان الجنيدي</div>
+        <div class="socials">
+            <a href="https://wa.me/966566996166" target="_blank" class="soc-btn wa">
+                <i class="fab fa-whatsapp"></i> تواصل واتساب
+            </a>
+            <a href="https://snapchat.com/t/2tVDWcXq" target="_blank" class="soc-btn sc">
+                <i class="fab fa-snapchat-ghost"></i> سناب شات
+            </a>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+    </script>
+</body>
+</html>
