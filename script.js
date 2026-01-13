@@ -35,10 +35,19 @@ function startGame() {
     renderLadder(); newQuestion();
 }
 
-// دالة للجوال: إظهار/إخفاء السلم
+// --- التعديل هنا: تحسين وظيفة الزر وتغيير الأيقونة ---
 function toggleMobileLadder() {
     const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('mobile-menu-btn');
+    
     sidebar.classList.toggle('active');
+    
+    // إذا كلاس active موجود، نغير الأيقونة لـ X، وإذا لا نرجعها قائمة
+    if (sidebar.classList.contains('active')) {
+        btn.innerHTML = '<i class="fas fa-times"></i>'; // علامة إكس
+    } else {
+        btn.innerHTML = '<i class="fas fa-list-ol"></i>'; // علامة القائمة
+    }
 }
 
 function renderLadder() {
@@ -57,10 +66,9 @@ function newQuestion() {
     isLocked = false;
     renderLadder();
     
-    // إصلاح مشكلة اللون البرتقالي: إزالة جميع الكلاسات يدوياً
     document.querySelectorAll('.answer-btn').forEach(b => {
-        b.classList.remove('selected', 'correct', 'wrong'); // مسح إجباري
-        b.className = 'shape-body answer-btn'; // إعادة ضبط الكلاس الأساسي
+        b.classList.remove('selected', 'correct', 'wrong');
+        b.className = 'shape-body answer-btn';
         b.style.visibility = 'visible';
     });
 
@@ -87,13 +95,12 @@ function selectAnswer(idx) {
     playSound('select');
     
     const btn = document.getElementById(`btn${idx}`);
-    btn.classList.add('selected'); // إضافة البرتقالي
+    btn.classList.add('selected');
 
     setTimeout(() => {
-        // التحقق من أننا ما زلنا في نفس السؤال قبل تغيير الألوان
-        if (!isLocked) return; // حماية إضافية
+        if (!isLocked) return;
         
-        btn.classList.remove('selected'); // إزالة البرتقالي
+        btn.classList.remove('selected');
         if(idx === correctIndex) {
             btn.classList.add('correct');
             if (currentLevel === 4 || currentLevel === 9) playSound('milestone');
