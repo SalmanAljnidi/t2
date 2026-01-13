@@ -15,7 +15,7 @@
         <div class="start-box">
             <div class="logo-img large-logo">؟</div>
             <h2>مسابقة جدول الضرب</h2>
-            <p>سجل اسمك لتبدأ التحدي نحو المليون!</p>
+            <p>سجل اسمك لتبدأ التحدي!</p>
             <input type="text" id="player-name-input" placeholder="اكتب اسمك هنا..." maxlength="15">
             <button onclick="startGame()">ابدأ المسابقة</button>
         </div>
@@ -25,25 +25,23 @@
 
     <div class="main-layout" id="main-game" style="opacity:0; pointer-events:none; transition: opacity 1s;">
         
-        <div class="sidebar">
+        <button id="mobile-menu-btn" onclick="toggleMobileLadder()">
+            <i class="fas fa-list-ol"></i>
+        </button>
+
+        <div class="sidebar" id="sidebar">
             <div class="money-ladder" id="money-ladder"></div>
         </div>
 
         <div class="game-area">
             
-            <div class="lifelines-bar">
-                <div class="lifeline-item" id="ll-audience" onclick="useAudience()">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="lifeline-item" id="ll-friend" onclick="usePhone()">
-                    <i class="fas fa-phone"></i>
-                </div>
-                <div class="lifeline-item" id="ll-50" onclick="use5050()">
-                    <span>50:50</span>
-                </div>
-            </div>
-
             <div class="player-info" id="player-display"></div>
+
+            <div class="lifelines-bar">
+                <div class="lifeline-item" id="ll-audience" onclick="useAudience()"><i class="fas fa-users"></i></div>
+                <div class="lifeline-item" id="ll-friend" onclick="usePhone()"><i class="fas fa-phone"></i></div>
+                <div class="lifeline-item" id="ll-50" onclick="use5050()"><span>50:50</span></div>
+            </div>
 
             <div class="logo-area">
                 <div class="logo-img">؟</div>
