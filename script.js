@@ -1,42 +1,84 @@
-// الصوتيات
+// --- نظام الصوت المتطور (Polyphonic Synthesizer) ---
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playTone(type) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+// دالة لعزف نغمة واحدة
+function playNote(freq, type, duration, startTime = 0) {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     
-    if(type === 'win') {
-        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
-        osc.frequency.exponentialRampToValueAtTime(1046.5, audioCtx.currentTime + 0.5); // C6
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    } else if (type === 'lose') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.linearRampToValueAtTime(50, audioCtx.currentTime + 0.8);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
-    } else { // Select
-        osc.frequency.value = 800;
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-    }
-    osc.start();
-    osc.stop(audioCtx.currentTime + (type==='select'?0.1:0.8));
+    const now = audioCtx.currentTime + startTime;
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    
+    osc.start(now);
+    osc.stop(now + duration);
 }
 
-// تحويل الأرقام
-const toArabic = (n) => n.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+// دالة لعزف كوردات (مجموعة نغمات)
+function playSound(effect) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    if (effect === 'select') {
+        playNote(800, 'sine', 0.1);
+    } 
+    else if (effect === 'correct') {
+        // نغمة نجاح ناعمة (Major Chord)
+        playNote(523.25, 'triangle', 0.6, 0);   // C5
+        playNote(659.25, 'triangle', 0.6, 0.1); // E5
+        playNote(783.99, 'triangle', 0.8, 0.2); // G5
+    } 
+    else if (effect === 'wrong') {
+        // نغمة خطأ ثقيلة (Dissonant)
+        playNote(150, 'sawtooth', 0.8, 0);
+        playNote(140, 'sawtooth', 0.8, 0); 
+    }
+    else if (effect === 'milestone') {
+        // نغمة احتفالية (Fanfare)
+        playNote(523.25, 'square', 0.3, 0);
+        playNote(659.25, 'square', 0.3, 0.15);
+        playNote(783.99, 'square', 0.3, 0.30);
+        playNote(1046.50, 'square', 1.0, 0.45); // C6 Long
+    }
+    else if (effect === 'win_million') {
+        // احتفال كبير
+        [0, 0.2, 0.4, 0.6, 0.8, 1.0].forEach((t, i) => {
+            playNote(523.25 + (i*100), 'square', 0.5, t);
+        });
+        setTimeout(() => playSound('milestone'), 1200);
+    }
+}
+
+// --- متغيرات اللعبة ---
+const toArabic = (n) => n.toString().replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
 const prizes = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
 let currentLevel = 0;
 let correctIndex = 0;
 let correctVal = 0;
 let isLocked = false;
+let playerName = "المتسابق";
 
-// بناء السلم
+// --- منطق البدء ---
+function startGame() {
+    const inputName = document.getElementById('player-name-input').value.trim();
+    if (inputName) {
+        playerName = inputName;
+    }
+    document.getElementById('start-screen').style.display = 'none';
+    const gameDiv = document.getElementById('main-game');
+    gameDiv.style.opacity = '1';
+    gameDiv.style.pointerEvents = 'all';
+    
+    // عرض الاسم
+    document.getElementById('player-display').innerText = `المتسابق: ${playerName}`;
+    
+    renderLadder();
+    newQuestion();
+}
+
 function renderLadder() {
     const container = document.getElementById('money-ladder');
     container.innerHTML = '';
@@ -52,14 +94,11 @@ function renderLadder() {
 function newQuestion() {
     isLocked = false;
     renderLadder();
-    
-    // Reset styling
     document.querySelectorAll('.answer-btn').forEach(b => {
         b.className = 'shape-body answer-btn';
         b.style.visibility = 'visible';
     });
 
-    // Logic
     const n1 = Math.floor(Math.random() * 10) + 1;
     const n2 = Math.floor(Math.random() * 10) + 1;
     correctVal = n1 * n2;
@@ -76,7 +115,6 @@ function newQuestion() {
             answers[i] = w;
         }
     }
-
     for(let i=0; i<4; i++) {
         document.getElementById(`ans${i}`).innerText = toArabic(answers[i]);
     }
@@ -85,49 +123,56 @@ function newQuestion() {
 function selectAnswer(idx) {
     if(isLocked) return;
     isLocked = true;
-    playTone('select');
+    playSound('select');
     
     const btn = document.getElementById(`btn${idx}`);
     btn.classList.add('selected');
 
-    // Suspense
     setTimeout(() => {
         btn.classList.remove('selected');
         if(idx === correctIndex) {
             btn.classList.add('correct');
-            playTone('win');
+            
+            // التحقق من المحطات الصوتية
+            if (currentLevel === 4 || currentLevel === 9) {
+                playSound('milestone'); // تشجيع عند 1000 و 32000
+            } else if (currentLevel === 14) {
+                playSound('win_million');
+                startConfetti();
+            } else {
+                playSound('correct');
+            }
+
             setTimeout(() => {
                 currentLevel++;
                 if(currentLevel >= prizes.length) {
-                    alert("مبروك المليون!");
+                    showModal('🎉 مبروك المليون 🎉', `ألف مبروك يا ${playerName}! لقد أتممت المسابقة بنجاح وحصلت على المليون!`);
                     currentLevel = 0;
+                    stopConfetti();
+                } else {
+                    newQuestion();
                 }
-                newQuestion();
-            }, 2000);
+            }, 2500); // زدنا الوقت قليلا للاستمتاع بالنغمة
         } else {
             btn.classList.add('wrong');
             document.getElementById(`btn${correctIndex}`).classList.add('correct');
-            playTone('lose');
+            playSound('wrong');
             setTimeout(() => {
-                alert("حظاً أوفر!");
+                showModal('حظاً أوفر', `للأسف إجابة خاطئة يا ${playerName}.`);
                 currentLevel = 0;
-                // Reset Lifelines
                 document.querySelectorAll('.lifeline-item').forEach(l => l.classList.remove('used-lifeline'));
                 newQuestion();
-            }, 2500);
+            }, 3000);
         }
-    }, 1500);
+    }, 2000);
 }
 
 // --- وسائل المساعدة ---
-
-// 1. حذف إجابتين
 function use5050() {
     const el = document.getElementById('ll-50');
     if(el.classList.contains('used-lifeline') || isLocked) return;
     el.classList.add('used-lifeline');
-    playTone('select');
-
+    playSound('select');
     let removed = 0;
     for(let i=0; i<4; i++) {
         if(i !== correctIndex && removed < 2) {
@@ -139,63 +184,32 @@ function use5050() {
     }
 }
 
-// 2. اتصال بصديق
 function usePhone() {
     const el = document.getElementById('ll-friend');
     if(el.classList.contains('used-lifeline') || isLocked) return;
     el.classList.add('used-lifeline');
-    playTone('select');
-
-    showModal('اتصال بصديق', `
-        <div class="phone-icon"><i class="fas fa-phone"></i></div>
-        <p>جاري الاتصال...</p>
-    `);
-
+    playSound('select');
+    showModal('اتصال بصديق', `<div class="phone-icon"><i class="fas fa-phone"></i></div><p>جاري الاتصال...</p>`);
     setTimeout(() => {
         document.getElementById('modal-content').innerHTML = `
             <div style="font-size:40px">🤠</div>
-            <p>أهلاً سلمان! أعتقد أن الإجابة هي <b>${toArabic(correctVal)}</b></p>
+            <p>هلا والله يا <b>${playerName}</b>!<br>أنا متأكد إن الجواب هو <b>${toArabic(correctVal)}</b></p>
         `;
-    }, 2500);
+    }, 3000);
 }
 
-// 3. رأي الجمهور (أعمدة بيانية)
 function useAudience() {
     const el = document.getElementById('ll-audience');
     if(el.classList.contains('used-lifeline') || isLocked) return;
     el.classList.add('used-lifeline');
-    playTone('select');
-
-    // حساب نسب عشوائية تكون الإجابة الصحيحة أعلاها
-    let p = [0,0,0,0];
-    let remaining = 100;
-    p[correctIndex] = Math.floor(Math.random() * 30) + 40; // 40-70%
-    remaining -= p[correctIndex];
-    
-    for(let i=0; i<4; i++){
-        if(i !== correctIndex){
-            if(i === 3) p[i] = remaining; // الباقي للأخير
-            else {
-                let val = Math.floor(Math.random() * remaining);
-                p[i] = val;
-                remaining -= val;
-            }
-        }
-    }
-
+    playSound('select');
+    let p = [0,0,0,0], rem = 100;
+    p[correctIndex] = Math.floor(Math.random() * 30) + 40; rem -= p[correctIndex];
+    for(let i=0; i<4; i++){ if(i!==correctIndex){ if(i===3) p[i]=rem; else { let v=Math.floor(Math.random()*rem); p[i]=v; rem-=v; }}}
     const chars = ['أ','ب','ج','د'];
     let html = '<div class="audience-chart">';
-    p.forEach((val, i) => {
-        html += `
-            <div class="bar-container">
-                <div style="height:${val}%" class="bar"></div>
-                <div class="bar-label">${chars[i]}</div>
-                <div style="font-size:10px">${toArabic(val)}%</div>
-            </div>
-        `;
-    });
+    p.forEach((val, i) => html += `<div style="display:flex; flex-direction:column; align-items:center; width:20%; justify-content:flex-end; height:100%"><div style="height:${val}%; width:100%; background:#d4af37;" class="bar"></div><div>${chars[i]}</div></div>`);
     html += '</div>';
-
     showModal('رأي الجمهور', html);
 }
 
@@ -204,21 +218,35 @@ function showModal(title, content) {
     document.getElementById('modal-content').innerHTML = content;
     document.getElementById('modal-overlay').style.display = 'flex';
 }
-function closeModal() {
-    document.getElementById('modal-overlay').style.display = 'none';
+function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+// --- قصاصات الورق (Confetti Logic) ---
+const canvas = document.getElementById("confetti-canvas");
+const ctx = canvas.getContext("2d");
+let confetti = [];
+let animationId = null;
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+
+function startConfetti() {
+    confetti = [];
+    for(let i=0; i<100; i++) confetti.push({
+        x: Math.random()*canvas.width, y: Math.random()*canvas.height - canvas.height,
+        color: `hsl(${Math.random()*360}, 100%, 50%)`, size: Math.random()*10+5, speed: Math.random()*5+2
+    });
+    animateConfetti();
 }
+function animateConfetti() {
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    confetti.forEach((p, i) => {
+        p.y += p.speed;
+        if(p.y > canvas.height) p.y = -10;
+        ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    });
+    animationId = requestAnimationFrame(animateConfetti);
+}
+function stopConfetti() { cancelAnimationFrame(animationId); ctx.clearRect(0,0,canvas.width,canvas.height); }
 
 // PWA
-let deferredPrompt;
-const installBtn = document.getElementById('install-btn');
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
-});
-installBtn.addEventListener('click', () => {
-    installBtn.style.display = 'none';
-    deferredPrompt.prompt();
-});
-
-newQuestion();
+let deferredPrompt; const installBtn = document.getElementById('install-btn');
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;installBtn.style.display='inline-block';});
+installBtn.addEventListener('click',()=>{installBtn.style.display='none';deferredPrompt.prompt();});
